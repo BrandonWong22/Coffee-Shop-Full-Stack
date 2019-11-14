@@ -50,7 +50,6 @@ def get_drinks_details(payload):
         'drinks': [drink.long() for drink in Drink.query.all()]
     })
 
-
 '''
 @TODO implement endpoint
     POST /drinks
@@ -82,7 +81,6 @@ def post_drinks(payload):
     except: 
         abort(422)
 
-
 '''
 @TODO implement endpoint
     PATCH /drinks/<id>
@@ -102,28 +100,29 @@ def patch_drinks(payload, drink_id):
     title = body.get('title', None)
     recipe = body.get('recipe', None)
 
-    drink = Drink.query.filter_by(id=drink_id).one_or_none()
+    try: 
+        drink = Drink.query.filter_by(id=drink_id).one_or_none()
 
-    if drink is None:
-        abort(404)
+        if drink is None:
+            abort(404)
 
-    if title is None and recipe is None:
-        abort(400)
+        if title is not None:
+            drink.title = title
 
-    if title is not None:
-        drink.title = title
+        if recipe is not None:
+            drink.recipe = json.dumps(recipe)
 
-    if recipe is not None:
-        drink.recipe = json.dumps(recipe)
+        drink.update()
 
-    drink.update()
+        drink_updated = Drink.query.filter_by(id=drink_id).first()
 
-    drink_updated = Drink.query.filter_by(id=drink_id).first()
+        return jsonify({ 
+            'success': True, 
+            'drinks': drink_updated.long()
+        })
 
-    return jsonify({ 
-        'success': True, 
-        'drinks': drink_updated.long()
-    })
+    except: 
+        abort(422)
 
 
 '''
@@ -139,15 +138,20 @@ def patch_drinks(payload, drink_id):
 @app.route('/drinks/<int:drink_id>', methods=['DELETE'])
 @requires_auth('delete:drinks')
 def delete_drinks(payload, drink_id): 
-    drink = Drink.query.get(drink_id)
+    try:
+        drink = Drink.query.get(drink_id)
+        if drink is None: 
+            abort(404)
 
-    drink.delete() 
+        drink.delete() 
 
-    return jsonify({
-        'success': True, 
-        'delete': drink_id
-    })
+        return jsonify({
+            'success': True, 
+            'delete': drink_id
+        })
 
+    except:
+        abort(422)
 
 ## Error Handling
 '''
